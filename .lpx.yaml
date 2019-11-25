@@ -1,0 +1,71 @@
+customer: mcc
+vertical: freshdesk
+runtime: 1
+
+# This feature is currently not documented,
+# but it is far more easier, then installing
+# JDK and maven based on an ubuntu 14.04 image
+from: maven:3.3.9-jdk-8
+
+
+# We use the checked in maven wrapper, to not rely on the package manager
+build: mvn clean install -DskipITs=true
+
+services:
+- id: freshdeskticketmonitoring
+  type: java
+  stageConfig:
+    dev:
+      replicas: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "512Mi"
+          cpu: "1"
+    pp:
+      replicas: 3
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "768Mi"
+          cpu: "1"
+    prod:
+      replicas: 3
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "768Mi"
+          cpu: "1"
+          
+  copy:
+  - ./target/freshdesk-ticket-datadog-0.0.1.jar /freshdesk-ticket-datadog-0.0.1.jar
+  # Memory settings have to be adjusted with respect to the resource limits below
+  exec: java -Xms256m -Djava.security.egd=file:/dev/./urandom -jar /freshdesk-ticket-datadog-0.0.1.jar
+  check: true
+  # These are the defaults and 
+  # needs to be enhanced for most services
+    
+  
+
+# Specifies the files executed for tests on each environment. Need to be executable 'chmod +x'
+tests:
+ - stage: dev
+   test: mvn verify -DskipUTs=true
+ - stage: pp
+   test: mvn verify -DskipUTs=true
+
+# The following values are EXAMPLES and MUST BE REPLACED
+# by your email addresses
+watchers:
+  - antra.devi@metronom-external.com
+
+# The following values are EXAMPLES and MUST BE REPLACED
+# by your slack channels
+#slack-channels:
+#  - 
